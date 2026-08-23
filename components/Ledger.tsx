@@ -111,7 +111,12 @@ export default function Ledger({
                       transition: { duration: SWEEP_SECONDS, ease: "linear" },
                     }) as never
               }
-              transition={{ duration: 0.4, delay: reduce ? 0 : 0.45, ease: [0.16, 1, 0.3, 1] }}
+              // the new panel only appears once the old one has fully dissolved
+              transition={{
+                duration: 0.35,
+                delay: reduce ? 0 : SWEEP_SECONDS + 0.08,
+                ease: [0.16, 1, 0.3, 1],
+              }}
               style={
                 {
                   "--wipe": "-20%",
