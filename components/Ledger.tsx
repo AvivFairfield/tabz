@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
-import { Check, PencilSimple, Trash } from "@phosphor-icons/react";
+import { ArrowsLeftRight, Check, PencilSimple, Trash } from "@phosphor-icons/react";
 import type { Expense, Traveler, TravelerId, TripData } from "@/lib/types";
 import { CATEGORY_LABELS, withAlpha } from "@/lib/types";
 import { formatDate, type TripSummary, type CategoryTotal } from "@/lib/format";
@@ -25,9 +25,37 @@ export default function Ledger({
 }) {
   const reduce = useReducedMotion();
   const [a, b] = data.travelers;
+  // below lg only one person's panel shows; remembered per device
+  const [mobileView, setMobileView] = useState<TravelerId>("a");
+
+  useEffect(() => {
+    const saved = window.localStorage.getItem("tabi-mobile-person");
+    if (saved === "a" || saved === "b") setMobileView(saved);
+  }, []);
+
+  function swapMobileView() {
+    const next: TravelerId = mobileView === "a" ? "b" : "a";
+    setMobileView(next);
+    window.localStorage.setItem("tabi-mobile-person", next);
+  }
+
+  const shown = mobileView === "a" ? a : b;
+  const hiddenOne = mobileView === "a" ? b : a;
 
   return (
     <section aria-label="Travelers" className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <button
+        onClick={swapMobileView}
+        aria-label={`Showing ${shown.name}. Switch to ${hiddenOne.name}`}
+        className="flex items-center justify-between rounded-full border border-hairline bg-surface-1 px-4 py-2.5 text-sm transition-colors hover:bg-surface-2 active:scale-[0.99] lg:hidden"
+      >
+        <span className="font-semibold text-ink">{shown.name}</span>
+        <span className="flex items-center gap-2 text-ink-subtle">
+          <ArrowsLeftRight size={16} weight="bold" aria-hidden />
+          {hiddenOne.name}
+        </span>
+      </button>
+      <div className={mobileView === "a" ? "" : "hidden lg:block"}>
       <PersonPanel
         traveler={a}
         expenses={data.expenses.filter((e) => e.payerId === "a")}
@@ -39,6 +67,8 @@ export default function Ledger({
         onEdit={onEdit}
         onRename={onRename}
       />
+      </div>
+      <div className={mobileView === "b" ? "" : "hidden lg:block"}>
       <PersonPanel
         traveler={b}
         expenses={data.expenses.filter((e) => e.payerId === "b")}
@@ -50,6 +80,7 @@ export default function Ledger({
         onEdit={onEdit}
         onRename={onRename}
       />
+      </div>
     </section>
   );
 }
