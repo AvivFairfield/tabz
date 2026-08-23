@@ -47,7 +47,8 @@ export function LogoTile({
         lineHeight: 1,
       }}
     >
-      {withGlyph ? "旅" : ""}
+      {/* Noto Sans JP's ascender-heavy metrics sit the glyph ~3.1% low; lift it to the optical centre */}
+      <span style={{ position: "relative", top: -Math.round(size * 0.031) }}>{withGlyph ? "旅" : ""}</span>
     </div>
   );
 }
