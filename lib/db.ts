@@ -14,7 +14,6 @@ import seed from "@/data/trip.json";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const DATA_FILE = path.join(DATA_DIR, "trip.json");
-const BLOB_PATHNAME = "trip.json";
 
 const SEED = seed as unknown as TripData;
 
@@ -39,25 +38,44 @@ export async function writeTrip(data: TripData): Promise<void> {
   await fs.rename(tmp, DATA_FILE);
 }
 
-async function readTripBlob(): Promise<TripData> {
+/*
+  Blob overwrites take up to a minute to propagate, which breaks
+  read-after-write. So every save is a NEW immutable blob named by
+  timestamp (immediately readable), reads pick the newest, and old
+  versions are pruned best-effort.
+*/
+const BLOB_PREFIX = "trip/";
+const KEEP_VERSIONS = 5;
+
+async function latestBlob() {
   const { list } = await import("@vercel/blob");
-  const { blobs } = await list({ prefix: BLOB_PATHNAME, limit: 1 });
+  const { blobs } = await list({ prefix: BLOB_PREFIX, limit: 1000 });
+  return blobs.sort((x, y) => y.pathname.localeCompare(x.pathname));
+}
+
+async function readTripBlob(): Promise<TripData> {
+  const blobs = await latestBlob();
   if (blobs.length === 0) {
     await writeTripBlob(SEED);
     return SEED;
   }
-  // cache-busting query keeps the CDN from serving a stale ledger
-  const res = await fetch(`${blobs[0].url}?v=${Date.now()}`, { cache: "no-store" });
+  const res = await fetch(blobs[0].url, { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to read ledger from blob storage");
   return (await res.json()) as TripData;
 }
 
 async function writeTripBlob(data: TripData): Promise<void> {
-  const { put } = await import("@vercel/blob");
-  await put(BLOB_PATHNAME, JSON.stringify(data, null, 2), {
+  const { put, del } = await import("@vercel/blob");
+  const name = `${BLOB_PREFIX}${String(Date.now()).padStart(14, "0")}.json`;
+  await put(name, JSON.stringify(data, null, 2), {
     access: "public",
     addRandomSuffix: false,
-    allowOverwrite: true,
     contentType: "application/json",
   });
+  // prune old versions; failures here never block the save
+  try {
+    const blobs = await latestBlob();
+    const stale = blobs.slice(KEEP_VERSIONS);
+    if (stale.length > 0) await del(stale.map((b) => b.url));
+  } catch {}
 }
