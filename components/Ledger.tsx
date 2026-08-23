@@ -36,7 +36,9 @@ export default function Ledger({
   // swaps counts taps and drives the button spin
   const [swaps, setSwaps] = useState(0);
   const desktop = useIsDesktop();
-  const panelRef = useRef<HTMLDivElement>(null);
+  // one slot per traveler: during the exit animation both panels are mounted,
+  // and a shared ref would get nulled by the outgoing one's unmount
+  const panelRefs = useRef<Record<TravelerId, HTMLDivElement | null>>({ a: null, b: null });
   // size of the outgoing panel, so petals can spawn across its whole face
   const [petalArea, setPetalArea] = useState<{ w: number; h: number; id: number } | null>(null);
 
@@ -48,7 +50,7 @@ export default function Ledger({
 
   function swapMobileView() {
     const next: TravelerId = mobileView === "a" ? "b" : "a";
-    const el = panelRef.current;
+    const el = panelRefs.current[mobileView];
     if (!reduce && desktop === false && el) {
       setPetalArea({ w: el.offsetWidth, h: el.offsetHeight, id: swaps + 1 });
     }
@@ -96,7 +98,9 @@ export default function Ledger({
           <AnimatePresence mode="popLayout" initial={false}>
             <motion.div
               key={mobileView}
-              ref={panelRef}
+              ref={(el) => {
+                panelRefs.current[mobileView] = el;
+              }}
               initial={swaps === 0 ? false : { opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0, "--wipe": "-20%" } as never}
               exit={
@@ -156,20 +160,23 @@ const PETAL_TINTS = ["#eba0b3", "#f3b6c6", "#e28aa3", "#f7cad6"];
  * tumbles up and to the right on the wind and fades.
  */
 function PetalDissolve({ width, height }: { width: number; height: number }) {
-  const count = Math.min(140, Math.max(50, Math.round((width * height) / 900)));
-  const petals = Array.from({ length: count }, (_, i) => {
-    const fx = Math.random();
-    return {
-      id: i,
-      left: fx * width,
-      top: Math.random() * height,
-      delay: fx * SWEEP_SECONDS * 0.95,
-      dx: 40 + Math.random() * 120,
-      dy: -(40 + Math.random() * 140),
-      spin: (Math.random() < 0.5 ? -1 : 1) * (240 + Math.random() * 360),
-      size: 7 + Math.random() * 6,
-      tint: PETAL_TINTS[i % PETAL_TINTS.length],
-    };
+  // rolled once per mount: re-rolling on re-render would retarget petals mid-flight
+  const [petals] = useState(() => {
+    const count = Math.min(140, Math.max(50, Math.round((width * height) / 900)));
+    return Array.from({ length: count }, (_, i) => {
+      const fx = Math.random();
+      return {
+        id: i,
+        left: fx * width,
+        top: Math.random() * height,
+        delay: fx * SWEEP_SECONDS * 0.95,
+        dx: 40 + Math.random() * 120,
+        dy: -(40 + Math.random() * 140),
+        spin: (Math.random() < 0.5 ? -1 : 1) * (240 + Math.random() * 360),
+        size: 7 + Math.random() * 6,
+        tint: PETAL_TINTS[i % PETAL_TINTS.length],
+      };
+    });
   });
 
   return (
