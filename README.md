@@ -1,36 +1,27 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Tabi 旅 — Japan trip ledger
 
-## Getting Started
+An expense tracker for two friends traveling Japan. Dark Tokyo-night design with sakura petals drifting over the page (Three.js) and live currency conversion.
 
-First, run the development server:
+## What it does
+
+- **Combined spending** up top: total, today, per-day average, days logged.
+- **Currency toggle** in the header: ¥ / ₪ / $, converted with hourly ECB rates (frankfurter.app). Amounts are always entered and stored in yen.
+- **A box per traveler** with their personal total broken down by category. Click the pencil next to a name to rename.
+- **Side-by-side ledger** — each traveler's expenses in their own spreadsheet-style column (date, category, title, amount), with two-tap delete.
+
+## Run it
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000. To use it together, run it on a machine you both can reach and share the network URL that `next dev` prints (or `npm run build && npm start` for production).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Where the data lives
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Everything is stored in `data/trip.json` (created on first run, git-ignored). Back it up by copying that file. Note: this file-based store fits a self-hosted server or local use; serverless hosts (Vercel functions) have read-only disks, so deploying there would need a small database swap (e.g. Vercel KV, SQLite on a VPS, or Supabase).
 
-## Learn More
+## Stack
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Next.js 16 (App Router, Turbopack) · React 19 · Tailwind v4 · Three.js via @react-three/fiber · Motion · Phosphor icons · Geist + Geist Mono · Exchange rates from [frankfurter.app](https://frankfurter.dev) (ECB)

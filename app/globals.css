@@ -1,26 +1,73 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* keep Tailwind's class scanner away from binary assets (GLB models, HDRIs) */
+@source not "../public";
 
+/*
+  Token system blended from linear.app (surface ladder, hairlines, no shadows)
+  and raycast (white primary CTA, keycap chips) DESIGN.md references.
+  Single accent: torii vermilion. Dark-only theme by design.
+*/
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-canvas: #060709;
+  --color-surface-1: #0e0f13;
+  --color-surface-2: #14151a;
+  --color-surface-3: #1a1b21;
+  --color-hairline: #23252b;
+  --color-hairline-strong: #34363f;
+  --color-ink: #f5f6f8;
+  --color-ink-muted: #c6cad2;
+  --color-ink-subtle: #8b8f98;
+  --color-ink-faint: #62666d;
+  --color-vermilion: #ff5747;
+  --color-vermilion-hover: #ff7264;
+  --color-vermilion-deep: #a1131a;
+  --color-moss: #59d499;
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: dark;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-vermilion) 35%, transparent);
+  color: var(--color-ink);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-canvas);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-surface-3);
+  border-radius: 5px;
+  border: 2px solid var(--color-canvas);
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.7);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
