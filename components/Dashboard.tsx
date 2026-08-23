@@ -36,6 +36,11 @@ export default function Dashboard() {
     setLoadError(false);
     try {
       const res = await fetch("/api/trip");
+      if (res.status === 401) {
+        // session expired: back to the PIN screen
+        window.location.replace("/pin");
+        return;
+      }
       if (!res.ok) throw new Error();
       setData(await res.json());
     } catch {
