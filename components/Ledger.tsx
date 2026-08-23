@@ -101,8 +101,8 @@ export default function Ledger({
               ref={(el) => {
                 panelRefs.current[mobileView] = el;
               }}
-              initial={swaps === 0 ? false : { opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0, "--wipe": "-20%" } as never}
+              initial={swaps === 0 ? false : reduce ? { opacity: 0 } : { opacity: 0, scale: 1.08 }}
+              animate={{ opacity: 1, scale: 1, "--wipe": "-20%" } as never}
               exit={
                 (reduce
                   ? { opacity: 0, transition: { duration: 0.15 } }
@@ -111,11 +111,14 @@ export default function Ledger({
                       transition: { duration: SWEEP_SECONDS, ease: "linear" },
                     }) as never
               }
-              // the new panel only appears once the old one has fully dissolved
+              // hanko stamp: once the old panel has dissolved, the new one presses
+              // in with a snap (opacity lands before the scale settles)
               transition={{
-                duration: 0.35,
-                delay: reduce ? 0 : SWEEP_SECONDS + 0.08,
-                ease: [0.16, 1, 0.3, 1],
+                type: "spring",
+                stiffness: 520,
+                damping: 30,
+                delay: reduce ? 0 : STAMP_DELAY,
+                opacity: { duration: 0.12, delay: reduce ? 0 : STAMP_DELAY },
               }}
               style={
                 {
@@ -130,7 +133,10 @@ export default function Ledger({
               {panelFor(mobileView)}
             </motion.div>
           </AnimatePresence>
-          {petalArea && <PetalDissolve key={petalArea.id} width={petalArea.w} height={petalArea.h} />}
+          {petalArea && (
+            <PetalDissolve key={`petals-${petalArea.id}`} width={petalArea.w} height={petalArea.h} />
+          )}
+          {swaps > 0 && !reduce && <StampRing key={`stamp-${swaps}`} />}
         </div>
       ) : (
         <>
@@ -157,6 +163,21 @@ function useIsDesktop() {
 
 /** How long the left-to-right wipe takes; petals spawn along its front. */
 const SWEEP_SECONDS = 0.9;
+/** When the incoming panel stamps in: just after the wipe has finished. */
+const STAMP_DELAY = SWEEP_SECONDS + 0.08;
+
+/** Vermilion ring that flashes around the panel's edge as it stamps in. */
+function StampRing() {
+  return (
+    <motion.div
+      aria-hidden
+      initial={{ opacity: 0, scale: 1 }}
+      animate={{ opacity: [0, 0.9, 0], scale: [1, 1, 1.05] }}
+      transition={{ duration: 0.55, delay: STAMP_DELAY, times: [0, 0.15, 1], ease: "easeOut" }}
+      className="pointer-events-none absolute inset-0 z-10 rounded-xl border-2 border-vermilion"
+    />
+  );
+}
 const PETAL_TINTS = ["#eba0b3", "#f3b6c6", "#e28aa3", "#f7cad6"];
 
 /**
