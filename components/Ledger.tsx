@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { ArrowsLeftRight, Check, PencilSimple, Trash } from "@phosphor-icons/react";
 import type { Expense, Traveler, TravelerId, TripData } from "@/lib/types";
@@ -33,53 +33,159 @@ export default function Ledger({
     if (saved === "a" || saved === "b") setMobileView(saved);
   }, []);
 
-  function swapMobileView() {
+  // swaps counts taps and drives the button spin
+  const [swaps, setSwaps] = useState(0);
+  const desktop = useIsDesktop();
+  const panelRef = useRef<HTMLDivElement>(null);
+  const dustRef = useRef<HTMLDivElement>(null);
+  const [dust, setDust] = useState<HTMLCanvasElement[] | null>(null);
+
+  useEffect(() => {
+    const host = dustRef.current;
+    if (!host || !dust) return;
+    host.replaceChildren(...dust);
+    const t = setTimeout(() => setDust(null), 1700);
+    return () => clearTimeout(t);
+  }, [dust]);
+
+  async function swapMobileView() {
     const next: TravelerId = mobileView === "a" ? "b" : "a";
-    setMobileView(next);
+    setSwaps((n) => n + 1);
     window.localStorage.setItem("tabi-mobile-person", next);
+    const el = panelRef.current;
+    if (reduce || desktop !== false || !el) {
+      setMobileView(next);
+      return;
+    }
+    // snapshot the outgoing panel and let it disintegrate over the new one
+    try {
+      const { default: html2canvas } = await import("html2canvas-pro");
+      const snap = await html2canvas(el, { backgroundColor: null, scale: 1, logging: false });
+      setDust(makeDustLayers(snap));
+    } catch (err) {
+      // snapshot failed: just switch
+      console.warn("Panel snapshot failed, switching without the dissolve", err);
+    }
+    setMobileView(next);
   }
 
   const shown = mobileView === "a" ? a : b;
   const hiddenOne = mobileView === "a" ? b : a;
 
+  const panelFor = (id: TravelerId) => (
+    <PersonPanel
+      traveler={id === "a" ? a : b}
+      expenses={data.expenses.filter((e) => e.payerId === id)}
+      total={summary.spentBy[id]}
+      categories={summary.categoriesBy[id]}
+      fmt={fmt}
+      reduce={!!reduce}
+      onDelete={onDelete}
+      onEdit={onEdit}
+      onRename={onRename}
+    />
+  );
+
   return (
     <section aria-label="Travelers" className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-      <button
-        onClick={swapMobileView}
-        aria-label={`Showing ${shown.name}. Switch to ${hiddenOne.name}`}
-        title={`Switch to ${hiddenOne.name}`}
-        className="flex h-10 w-10 items-center justify-center justify-self-center rounded-full border border-hairline bg-surface-1 text-ink-muted transition-colors hover:bg-surface-2 hover:text-ink active:scale-[0.95] lg:hidden"
-      >
-        <ArrowsLeftRight size={18} weight="bold" aria-hidden />
-      </button>
-      <div className={mobileView === "a" ? "" : "hidden lg:block"}>
-      <PersonPanel
-        traveler={a}
-        expenses={data.expenses.filter((e) => e.payerId === "a")}
-        total={summary.spentBy.a}
-        categories={summary.categoriesBy.a}
-        fmt={fmt}
-        reduce={!!reduce}
-        onDelete={onDelete}
-        onEdit={onEdit}
-        onRename={onRename}
-      />
+      <div className="relative justify-self-center lg:hidden">
+        <motion.button
+          onClick={swapMobileView}
+          aria-label={`Showing ${shown.name}. Switch to ${hiddenOne.name}`}
+          title={`Switch to ${hiddenOne.name}`}
+          animate={{ rotate: reduce ? 0 : swaps * 180 }}
+          transition={{ type: "spring", stiffness: 260, damping: 18 }}
+          whileTap={{ scale: 0.88 }}
+          className="relative z-10 flex h-10 w-10 items-center justify-center rounded-full border border-hairline bg-surface-1 text-ink-muted transition-colors hover:bg-surface-2 hover:text-ink"
+        >
+          <ArrowsLeftRight size={18} weight="bold" aria-hidden />
+        </motion.button>
       </div>
-      <div className={mobileView === "b" ? "" : "hidden lg:block"}>
-      <PersonPanel
-        traveler={b}
-        expenses={data.expenses.filter((e) => e.payerId === "b")}
-        total={summary.spentBy.b}
-        categories={summary.categoriesBy.b}
-        fmt={fmt}
-        reduce={!!reduce}
-        onDelete={onDelete}
-        onEdit={onEdit}
-        onRename={onRename}
-      />
-      </div>
+
+      {desktop === false ? (
+        // mobile: one panel at a time; the outgoing one disintegrates into dust
+        <div className="relative">
+          <motion.div
+            key={mobileView}
+            ref={panelRef}
+            initial={swaps === 0 ? false : { opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: reduce ? 0 : 0.35, ease: [0.16, 1, 0.3, 1] }}
+          >
+            {panelFor(mobileView)}
+          </motion.div>
+          {dust && (
+            <div
+              ref={dustRef}
+              aria-hidden
+              className="pointer-events-none absolute left-0 top-0 z-10 overflow-visible"
+            />
+          )}
+        </div>
+      ) : (
+        <>
+          <div className={mobileView === "a" ? "" : "hidden lg:block"}>{panelFor("a")}</div>
+          <div className={mobileView === "b" ? "" : "hidden lg:block"}>{panelFor("b")}</div>
+        </>
+      )}
     </section>
   );
+}
+
+/** null until mounted (SSR-safe), then tracks the lg breakpoint */
+function useIsDesktop() {
+  const [desktop, setDesktop] = useState<boolean | null>(null);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const update = () => setDesktop(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+  return desktop;
+}
+
+const DUST_LAYERS = 24;
+
+/**
+ * Thanos-style disintegration: scatter the snapshot's pixels across
+ * layers (weighted left-to-right so the crumble sweeps across the panel),
+ * then blow each layer away with a staggered CSS animation.
+ */
+function makeDustLayers(snap: HTMLCanvasElement): HTMLCanvasElement[] {
+  const { width, height } = snap;
+  const src = snap.getContext("2d")!.getImageData(0, 0, width, height);
+  const buffers = Array.from({ length: DUST_LAYERS }, () => new Uint8ClampedArray(src.data.length));
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const i = (y * width + x) * 4;
+      if (src.data[i + 3] === 0) continue;
+      const sweep = x / width;
+      const layer = Math.min(
+        DUST_LAYERS - 1,
+        Math.max(0, Math.floor((sweep + (Math.random() - 0.5) * 0.6) * DUST_LAYERS))
+      );
+      buffers[layer].set(src.data.subarray(i, i + 4), i);
+    }
+  }
+
+  return buffers.map((buf, idx) => {
+    const c = document.createElement("canvas");
+    c.width = width;
+    c.height = height;
+    c.getContext("2d")!.putImageData(new ImageData(buf, width, height), 0, 0);
+    c.style.position = "absolute";
+    c.style.left = "0";
+    c.style.top = "0";
+    c.style.width = `${width}px`;
+    c.style.height = `${height}px`;
+    c.style.setProperty("--dx", `${40 + Math.random() * 90}px`);
+    c.style.setProperty("--dy", `${-90 + Math.random() * 120}px`);
+    c.style.setProperty("--rot", `${(Math.random() - 0.5) * 14}deg`);
+    c.style.animation = `tabz-dissolve 1.1s cubic-bezier(0.16, 1, 0.3, 1) ${idx * 0.025}s forwards`;
+    return c;
+  });
 }
 
 function PersonPanel({
