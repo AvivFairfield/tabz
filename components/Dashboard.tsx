@@ -6,13 +6,14 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ArrowsClockwise, Plus } from "@phosphor-icons/react";
 import type { Expense, TravelerId, TripData } from "@/lib/types";
 import {
+  combinedCategories,
   CURRENCIES,
   formatMoney,
   summarize,
-  trackingStats,
   type Currency,
   type Rates,
 } from "@/lib/format";
+import CategoryPie from "./CategoryPie";
 import Ledger from "./Ledger";
 import ExpenseModal, { type NewExpense } from "./ExpenseModal";
 
@@ -308,7 +309,7 @@ function CombinedPanel({
   fmt: Fmt;
   reduce: boolean;
 }) {
-  const stats = trackingStats(data.expenses, summary.total);
+  const categories = combinedCategories(data.expenses, summary.total);
   return (
     <motion.section
       initial={reduce ? false : { opacity: 0, y: 16 }}
@@ -317,24 +318,13 @@ function CombinedPanel({
       aria-label="Combined spending"
       className="mt-10 rounded-2xl border border-hairline bg-surface-1/65 p-6 backdrop-blur-xl sm:p-8"
     >
-      <div className="grid grid-cols-1 items-end gap-8 lg:grid-cols-2">
+      <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-2">
         <div>
           <p className="text-sm text-ink-subtle">Spent together so far</p>
           <p className="mt-2 font-mono text-5xl tracking-tight sm:text-6xl">{fmt(summary.total)}</p>
         </div>
-        <div className="grid grid-cols-3 gap-4 border-t border-hairline pt-6 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
-          <div>
-            <p className="text-xs text-ink-subtle">Today</p>
-            <p className="mt-1 font-mono text-lg">{fmt(stats.todayTotal)}</p>
-          </div>
-          <div>
-            <p className="text-xs text-ink-subtle">Per day</p>
-            <p className="mt-1 font-mono text-lg">{fmt(stats.dailyAverage)}</p>
-          </div>
-          <div>
-            <p className="text-xs text-ink-subtle">Days logged</p>
-            <p className="mt-1 font-mono text-lg">{stats.daysLogged}</p>
-          </div>
+        <div className="border-t border-hairline pt-6 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
+          <CategoryPie categories={categories} fmt={fmt} />
         </div>
       </div>
     </motion.section>

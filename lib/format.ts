@@ -1,4 +1,4 @@
-import type { Expense, TravelerId } from "./types";
+import { CATEGORIES, type Expense, type TravelerId } from "./types";
 
 const yen = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -85,36 +85,15 @@ export function summarize(expenses: Expense[]): TripSummary {
   return { total, spentBy, categoriesBy: { a: toSorted("a"), b: toSorted("b") } };
 }
 
-export interface TrackingStats {
-  todayTotal: number;
-  daysLogged: number;
-  dailyAverage: number;
-  topCategories: { category: Expense["category"]; total: number; share: number }[];
-}
-
-export function trackingStats(expenses: Expense[], total: number): TrackingStats {
-  const todayIso = new Date().toISOString().slice(0, 10);
-  const days = new Set<string>();
+/** Combined per-category totals in fixed CATEGORIES order (pie slice order). */
+export function combinedCategories(expenses: Expense[], total: number): CategoryTotal[] {
   const byCategory = new Map<Expense["category"], number>();
-  let todayTotal = 0;
   for (const e of expenses) {
-    days.add(e.date);
     byCategory.set(e.category, (byCategory.get(e.category) ?? 0) + e.amount);
-    if (e.date === todayIso) todayTotal += e.amount;
   }
-  const daysLogged = days.size;
-  const topCategories = [...byCategory.entries()]
-    .sort((x, y) => y[1] - x[1])
-    .slice(0, 3)
-    .map(([category, catTotal]) => ({
-      category,
-      total: catTotal,
-      share: total > 0 ? catTotal / total : 0,
-    }));
-  return {
-    todayTotal,
-    daysLogged,
-    dailyAverage: daysLogged > 0 ? Math.round(total / daysLogged) : 0,
-    topCategories,
-  };
+  return CATEGORIES.filter((c) => byCategory.has(c)).map((category) => ({
+    category,
+    total: byCategory.get(category)!,
+    share: total > 0 ? byCategory.get(category)! / total : 0,
+  }));
 }

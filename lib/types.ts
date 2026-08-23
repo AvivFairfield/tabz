@@ -37,12 +37,18 @@ export const CATEGORY_LABELS: Record<
   Category,
   { label: string; kanji: string; color: string }
 > = {
-  food: { label: "Food", kanji: "食", color: "#f5a524" },
-  transport: { label: "Transport", kanji: "交", color: "#4cc2f1" },
-  stay: { label: "Stay", kanji: "宿", color: "#a78bfa" },
-  activities: { label: "Activities", kanji: "遊", color: "#3fd68f" },
-  shopping: { label: "Shopping", kanji: "買", color: "#f26fae" },
-  other: { label: "Other", kanji: "他", color: "#9aa3b2" },
+  /*
+    Category hues are the dataviz reference dark palette rotated so blue
+    lands on transport; adjacency in this fixed order (including the pie's
+    wrap-around) is CVD-validated. Don't reorder without re-running
+    the palette validator.
+  */
+  food: { label: "Food", kanji: "食", color: "#e66767" },
+  transport: { label: "Transport", kanji: "交", color: "#3987e5" },
+  stay: { label: "Stay", kanji: "宿", color: "#199e70" },
+  activities: { label: "Activities", kanji: "遊", color: "#c98500" },
+  shopping: { label: "Shopping", kanji: "買", color: "#008300" },
+  other: { label: "Other", kanji: "他", color: "#9085e9" },
 };
 
 /** "#rrggbb" + alpha in 0..1 -> rgba-capable 8-digit hex */
