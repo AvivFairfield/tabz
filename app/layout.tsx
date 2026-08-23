@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Tabi · Japan trip ledger",
+  title: "Tabz · Japan trip ledger",
   description:
     "A shared expense ledger for two friends traveling Japan. Track personal spending, split the shared pot, settle up.",
 };

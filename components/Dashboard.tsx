@@ -115,7 +115,7 @@ export default function Dashboard() {
               >
                 旅
               </span>
-              <h1 className="text-base font-semibold tracking-tight">Tabi</h1>
+              <h1 className="text-base font-semibold tracking-tight">Tabz</h1>
             </div>
           </div>
         </header>
@@ -153,7 +153,7 @@ export default function Dashboard() {
 
         <footer className="border-t border-hairline/60">
           <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between px-4 py-6 text-sm text-ink-subtle sm:px-6">
-            <span>Tabi, a two-person ledger for the Japan trip</span>
+            <span>Tabz, a two-person ledger for the Japan trip</span>
             <span className="font-mono" aria-hidden>
               旅費
             </span>
