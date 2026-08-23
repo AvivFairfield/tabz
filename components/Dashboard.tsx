@@ -177,14 +177,6 @@ export default function Dashboard() {
           )}
         </main>
 
-        <footer className="border-t border-hairline/60">
-          <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between px-4 py-6 text-sm text-ink-subtle sm:px-6">
-            <span>Spending tracker</span>
-            <span className="font-mono" aria-hidden>
-              旅費
-            </span>
-          </div>
-        </footer>
       </div>
 
       <FloatingControls
