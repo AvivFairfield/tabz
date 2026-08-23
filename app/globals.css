@@ -29,6 +29,8 @@
 
 html {
   color-scheme: dark;
+  /* never allow sideways panning on phones, whatever overflows */
+  overflow-x: hidden;
 }
 
 body {

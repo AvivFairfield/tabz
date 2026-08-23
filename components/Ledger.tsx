@@ -39,8 +39,14 @@ export default function Ledger({
   // one slot per traveler: during the exit animation both panels are mounted,
   // and a shared ref would get nulled by the outgoing one's unmount
   const panelRefs = useRef<Record<TravelerId, HTMLDivElement | null>>({ a: null, b: null });
-  // size of the outgoing panel, so petals can spawn across its whole face
-  const [petalArea, setPetalArea] = useState<{ w: number; h: number; id: number } | null>(null);
+  // viewport box of the outgoing panel, so petals can spawn across its whole face
+  const [petalArea, setPetalArea] = useState<{
+    left: number;
+    top: number;
+    w: number;
+    h: number;
+    id: number;
+  } | null>(null);
 
   useEffect(() => {
     if (!petalArea) return;
@@ -52,7 +58,8 @@ export default function Ledger({
     const next: TravelerId = mobileView === "a" ? "b" : "a";
     const el = panelRefs.current[mobileView];
     if (!reduce && desktop === false && el) {
-      setPetalArea({ w: el.offsetWidth, h: el.offsetHeight, id: swaps + 1 });
+      const r = el.getBoundingClientRect();
+      setPetalArea({ left: r.left, top: r.top, w: r.width, h: r.height, id: swaps + 1 });
     }
     setSwaps((n) => n + 1);
     setMobileView(next);
@@ -133,9 +140,7 @@ export default function Ledger({
               {panelFor(mobileView)}
             </motion.div>
           </AnimatePresence>
-          {petalArea && (
-            <PetalDissolve key={`petals-${petalArea.id}`} width={petalArea.w} height={petalArea.h} />
-          )}
+          {petalArea && <PetalDissolve key={`petals-${petalArea.id}`} area={petalArea} />}
           {swaps > 0 && !reduce && <StampRing key={`stamp-${swaps}`} />}
         </div>
       ) : (
@@ -185,16 +190,20 @@ const PETAL_TINTS = ["#eba0b3", "#f3b6c6", "#e28aa3", "#f7cad6"];
  * born where the wipe front passes (delay follows its x position), then
  * tumbles up and to the right on the wind and fades.
  */
-function PetalDissolve({ width, height }: { width: number; height: number }) {
+function PetalDissolve({
+  area,
+}: {
+  area: { left: number; top: number; w: number; h: number };
+}) {
   // rolled once per mount: re-rolling on re-render would retarget petals mid-flight
   const [petals] = useState(() => {
-    const count = Math.min(140, Math.max(50, Math.round((width * height) / 900)));
+    const count = Math.min(140, Math.max(50, Math.round((area.w * area.h) / 900)));
     return Array.from({ length: count }, (_, i) => {
       const fx = Math.random();
       return {
         id: i,
-        left: fx * width,
-        top: Math.random() * height,
+        left: area.left + fx * area.w,
+        top: area.top + Math.random() * area.h,
         delay: fx * SWEEP_SECONDS * 0.95,
         dx: 40 + Math.random() * 120,
         dy: -(40 + Math.random() * 140),
@@ -206,7 +215,8 @@ function PetalDissolve({ width, height }: { width: number; height: number }) {
   });
 
   return (
-    <div className="pointer-events-none absolute left-0 top-0 z-10 overflow-visible" aria-hidden>
+    // fixed to the viewport and clipped, so petals leaving the screen can never widen the page
+    <div className="pointer-events-none fixed inset-0 z-10 overflow-hidden" aria-hidden>
       {petals.map((p) => (
         <motion.span
           key={p.id}
