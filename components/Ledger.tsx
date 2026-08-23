@@ -93,9 +93,9 @@ export default function Ledger({
           animate={{ rotate: reduce ? 0 : swaps * 180 }}
           transition={{ type: "spring", stiffness: 260, damping: 18 }}
           whileTap={{ scale: 0.88 }}
-          className="relative z-10 flex h-10 w-10 items-center justify-center rounded-full border border-hairline bg-surface-1 text-ink-muted transition-colors hover:bg-surface-2 hover:text-ink"
+          className="relative z-10 flex h-12 w-20 items-center justify-center rounded-full border border-hairline bg-surface-1 text-ink-muted transition-colors hover:bg-surface-2 hover:text-ink"
         >
-          <ArrowsLeftRight size={18} weight="bold" aria-hidden />
+          <ArrowsLeftRight size={22} weight="bold" aria-hidden />
         </motion.button>
       </div>
 
