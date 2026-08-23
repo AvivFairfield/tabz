@@ -13,9 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Tabz · Japan trip ledger",
-  description:
-    "A shared expense ledger for two friends traveling Japan. Track personal spending, split the shared pot, settle up.",
+  title: "Tabz",
+  description: "Spending tracker.",
 };
 
 export const viewport: Viewport = {

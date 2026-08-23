@@ -1,6 +1,6 @@
-# Tabz 旅 — Japan trip ledger
+# Tabz 旅
 
-An expense tracker for two friends traveling Japan. Dark Tokyo-night design with sakura petals drifting over the page (Three.js) and live currency conversion.
+Spending tracker. Dark Tokyo-night design with sakura petals drifting over the page (Three.js) and live currency conversion.
 
 ## What it does
 

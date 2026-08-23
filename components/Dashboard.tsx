@@ -153,7 +153,7 @@ export default function Dashboard() {
 
         <footer className="border-t border-hairline/60">
           <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between px-4 py-6 text-sm text-ink-subtle sm:px-6">
-            <span>Tabz, a two-person ledger for the Japan trip</span>
+            <span>Spending tracker</span>
             <span className="font-mono" aria-hidden>
               旅費
             </span>
