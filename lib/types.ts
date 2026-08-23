@@ -5,11 +5,18 @@ export interface Traveler {
   name: string;
 }
 
+/*
+  Order matters: it is the pie slice order (and the picker order). The
+  hues are the original pastels deepened into the dark-mode band, and
+  this arrangement (including the wrap-around) was brute-forced for the
+  best colour-vision separation (worst adjacent ΔE 24.5). Re-run the
+  dataviz palette validator before reordering or recolouring.
+*/
 export const CATEGORIES = [
   "food",
   "transport",
-  "stay",
   "activities",
+  "stay",
   "shopping",
   "other",
 ] as const;
@@ -37,18 +44,12 @@ export const CATEGORY_LABELS: Record<
   Category,
   { label: string; kanji: string; color: string }
 > = {
-  /*
-    Category hues are the dataviz reference dark palette rotated so blue
-    lands on transport; adjacency in this fixed order (including the pie's
-    wrap-around) is CVD-validated. Don't reorder without re-running
-    the palette validator.
-  */
-  food: { label: "Food", kanji: "食", color: "#e66767" },
-  transport: { label: "Transport", kanji: "交", color: "#3987e5" },
-  stay: { label: "Stay", kanji: "宿", color: "#199e70" },
-  activities: { label: "Activities", kanji: "遊", color: "#c98500" },
-  shopping: { label: "Shopping", kanji: "買", color: "#008300" },
-  other: { label: "Other", kanji: "他", color: "#9085e9" },
+  food: { label: "Food", kanji: "食", color: "#c28100" },
+  transport: { label: "Transport", kanji: "交", color: "#2494cf" },
+  activities: { label: "Activities", kanji: "遊", color: "#14a065" },
+  stay: { label: "Stay", kanji: "宿", color: "#8f7fe8" },
+  shopping: { label: "Shopping", kanji: "買", color: "#d4508a" },
+  other: { label: "Other", kanji: "他", color: "#6b82c9" },
 };
 
 /** "#rrggbb" + alpha in 0..1 -> rgba-capable 8-digit hex */
