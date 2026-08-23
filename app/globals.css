@@ -74,16 +74,3 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   }
 }
 
-/* outgoing mobile panel crumbling into wind-blown dust (per-layer vars set inline) */
-@keyframes tabz-dissolve {
-  0% {
-    transform: translate(0, 0) rotate(0deg);
-    opacity: 1;
-    filter: blur(0);
-  }
-  100% {
-    transform: translate(var(--dx), var(--dy)) rotate(var(--rot));
-    opacity: 0;
-    filter: blur(2px);
-  }
-}

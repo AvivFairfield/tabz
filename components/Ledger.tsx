@@ -37,36 +37,24 @@ export default function Ledger({
   const [swaps, setSwaps] = useState(0);
   const desktop = useIsDesktop();
   const panelRef = useRef<HTMLDivElement>(null);
-  const dustRef = useRef<HTMLDivElement>(null);
-  const [dust, setDust] = useState<HTMLCanvasElement[] | null>(null);
+  // size of the outgoing panel, so petals can spawn across its whole face
+  const [petalArea, setPetalArea] = useState<{ w: number; h: number; id: number } | null>(null);
 
   useEffect(() => {
-    const host = dustRef.current;
-    if (!host || !dust) return;
-    host.replaceChildren(...dust);
-    const t = setTimeout(() => setDust(null), 1700);
+    if (!petalArea) return;
+    const t = setTimeout(() => setPetalArea(null), 2400);
     return () => clearTimeout(t);
-  }, [dust]);
+  }, [petalArea]);
 
-  async function swapMobileView() {
+  function swapMobileView() {
     const next: TravelerId = mobileView === "a" ? "b" : "a";
-    setSwaps((n) => n + 1);
-    window.localStorage.setItem("tabi-mobile-person", next);
     const el = panelRef.current;
-    if (reduce || desktop !== false || !el) {
-      setMobileView(next);
-      return;
+    if (!reduce && desktop === false && el) {
+      setPetalArea({ w: el.offsetWidth, h: el.offsetHeight, id: swaps + 1 });
     }
-    // snapshot the outgoing panel and let it disintegrate over the new one
-    try {
-      const { default: html2canvas } = await import("html2canvas-pro");
-      const snap = await html2canvas(el, { backgroundColor: null, scale: 1, logging: false });
-      setDust(makeDustLayers(snap));
-    } catch (err) {
-      // snapshot failed: just switch
-      console.warn("Panel snapshot failed, switching without the dissolve", err);
-    }
+    setSwaps((n) => n + 1);
     setMobileView(next);
+    window.localStorage.setItem("tabi-mobile-person", next);
   }
 
   const shown = mobileView === "a" ? a : b;
@@ -103,24 +91,37 @@ export default function Ledger({
       </div>
 
       {desktop === false ? (
-        // mobile: one panel at a time; the outgoing one disintegrates into dust
+        // mobile: one panel at a time; the outgoing one wipes away into sakura petals
         <div className="relative">
-          <motion.div
-            key={mobileView}
-            ref={panelRef}
-            initial={swaps === 0 ? false : { opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: reduce ? 0 : 0.35, ease: [0.16, 1, 0.3, 1] }}
-          >
-            {panelFor(mobileView)}
-          </motion.div>
-          {dust && (
-            <div
-              ref={dustRef}
-              aria-hidden
-              className="pointer-events-none absolute left-0 top-0 z-10 overflow-visible"
-            />
-          )}
+          <AnimatePresence mode="popLayout" initial={false}>
+            <motion.div
+              key={mobileView}
+              ref={panelRef}
+              initial={swaps === 0 ? false : { opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0, "--wipe": "-20%" } as never}
+              exit={
+                (reduce
+                  ? { opacity: 0, transition: { duration: 0.15 } }
+                  : {
+                      "--wipe": "120%",
+                      transition: { duration: SWEEP_SECONDS, ease: "linear" },
+                    }) as never
+              }
+              transition={{ duration: 0.4, delay: reduce ? 0 : 0.45, ease: [0.16, 1, 0.3, 1] }}
+              style={
+                {
+                  "--wipe": "-20%",
+                  WebkitMaskImage:
+                    "linear-gradient(to right, transparent var(--wipe), black calc(var(--wipe) + 18%))",
+                  maskImage:
+                    "linear-gradient(to right, transparent var(--wipe), black calc(var(--wipe) + 18%))",
+                } as never
+              }
+            >
+              {panelFor(mobileView)}
+            </motion.div>
+          </AnimatePresence>
+          {petalArea && <PetalDissolve key={petalArea.id} width={petalArea.w} height={petalArea.h} />}
         </div>
       ) : (
         <>
@@ -145,47 +146,64 @@ function useIsDesktop() {
   return desktop;
 }
 
-const DUST_LAYERS = 24;
+/** How long the left-to-right wipe takes; petals spawn along its front. */
+const SWEEP_SECONDS = 0.9;
+const PETAL_TINTS = ["#eba0b3", "#f3b6c6", "#e28aa3", "#f7cad6"];
 
 /**
- * Thanos-style disintegration: scatter the snapshot's pixels across
- * layers (weighted left-to-right so the crumble sweeps across the panel),
- * then blow each layer away with a staggered CSS animation.
+ * The outgoing panel's face scattering into sakura petals: each petal is
+ * born where the wipe front passes (delay follows its x position), then
+ * tumbles up and to the right on the wind and fades.
  */
-function makeDustLayers(snap: HTMLCanvasElement): HTMLCanvasElement[] {
-  const { width, height } = snap;
-  const src = snap.getContext("2d")!.getImageData(0, 0, width, height);
-  const buffers = Array.from({ length: DUST_LAYERS }, () => new Uint8ClampedArray(src.data.length));
-
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const i = (y * width + x) * 4;
-      if (src.data[i + 3] === 0) continue;
-      const sweep = x / width;
-      const layer = Math.min(
-        DUST_LAYERS - 1,
-        Math.max(0, Math.floor((sweep + (Math.random() - 0.5) * 0.6) * DUST_LAYERS))
-      );
-      buffers[layer].set(src.data.subarray(i, i + 4), i);
-    }
-  }
-
-  return buffers.map((buf, idx) => {
-    const c = document.createElement("canvas");
-    c.width = width;
-    c.height = height;
-    c.getContext("2d")!.putImageData(new ImageData(buf, width, height), 0, 0);
-    c.style.position = "absolute";
-    c.style.left = "0";
-    c.style.top = "0";
-    c.style.width = `${width}px`;
-    c.style.height = `${height}px`;
-    c.style.setProperty("--dx", `${40 + Math.random() * 90}px`);
-    c.style.setProperty("--dy", `${-90 + Math.random() * 120}px`);
-    c.style.setProperty("--rot", `${(Math.random() - 0.5) * 14}deg`);
-    c.style.animation = `tabz-dissolve 1.1s cubic-bezier(0.16, 1, 0.3, 1) ${idx * 0.025}s forwards`;
-    return c;
+function PetalDissolve({ width, height }: { width: number; height: number }) {
+  const count = Math.min(140, Math.max(50, Math.round((width * height) / 900)));
+  const petals = Array.from({ length: count }, (_, i) => {
+    const fx = Math.random();
+    return {
+      id: i,
+      left: fx * width,
+      top: Math.random() * height,
+      delay: fx * SWEEP_SECONDS * 0.95,
+      dx: 40 + Math.random() * 120,
+      dy: -(40 + Math.random() * 140),
+      spin: (Math.random() < 0.5 ? -1 : 1) * (240 + Math.random() * 360),
+      size: 7 + Math.random() * 6,
+      tint: PETAL_TINTS[i % PETAL_TINTS.length],
+    };
   });
+
+  return (
+    <div className="pointer-events-none absolute left-0 top-0 z-10 overflow-visible" aria-hidden>
+      {petals.map((p) => (
+        <motion.span
+          key={p.id}
+          initial={{ opacity: 0, x: 0, y: 0, rotate: 0, scale: 0.5 }}
+          animate={{
+            opacity: [0, 1, 1, 0],
+            x: [0, p.dx * 0.35, p.dx],
+            y: [0, p.dy * 0.3, p.dy],
+            rotate: [0, p.spin * 0.5, p.spin],
+            scale: [0.5, 1, 0.9],
+          }}
+          transition={{
+            duration: 1.3,
+            delay: p.delay,
+            ease: [0.16, 1, 0.3, 1],
+            opacity: { duration: 1.3, delay: p.delay, times: [0, 0.1, 0.6, 1] },
+          }}
+          style={{
+            position: "absolute",
+            left: p.left,
+            top: p.top,
+            width: p.size * 0.7,
+            height: p.size,
+            backgroundColor: p.tint,
+            borderRadius: "100% 0 100% 0",
+          }}
+        />
+      ))}
+    </div>
+  );
 }
 
 function PersonPanel({
