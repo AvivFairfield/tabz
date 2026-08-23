@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ArrowsClockwise, Plus } from "@phosphor-icons/react";
-import type { TravelerId, TripData } from "@/lib/types";
+import type { Expense, TravelerId, TripData } from "@/lib/types";
 import {
   CURRENCIES,
   formatMoney,
@@ -26,6 +26,7 @@ export default function Dashboard() {
   const [data, setData] = useState<TripData | null>(null);
   const [loadError, setLoadError] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<Expense | null>(null);
   const [currency, setCurrency] = useState<Currency>("JPY");
   const [rates, setRates] = useState<Rates | null>(null);
   const reduce = useReducedMotion();
@@ -66,7 +67,20 @@ export default function Dashboard() {
 
   const summary = useMemo(() => (data ? summarize(data.expenses) : null), [data]);
 
-  async function addExpense(expense: NewExpense) {
+  async function saveExpense(expense: NewExpense) {
+    if (editTarget) {
+      const res = await fetch(`/api/expenses/${editTarget.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(expense),
+      });
+      if (!res.ok) throw new Error();
+      const updated: Expense = await res.json();
+      setData((d) =>
+        d ? { ...d, expenses: d.expenses.map((e) => (e.id === updated.id ? updated : e)) } : d
+      );
+      return;
+    }
     const res = await fetch("/api/expenses", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -75,6 +89,16 @@ export default function Dashboard() {
     if (!res.ok) throw new Error();
     const saved = await res.json();
     setData((d) => (d ? { ...d, expenses: [...d.expenses, saved] } : d));
+  }
+
+  function openAdd() {
+    setEditTarget(null);
+    setModalOpen(true);
+  }
+
+  function openEdit(expense: Expense) {
+    setEditTarget(expense);
+    setModalOpen(true);
   }
 
   async function deleteExpense(id: string) {
@@ -144,6 +168,7 @@ export default function Dashboard() {
                   summary={summary}
                   fmt={fmt}
                   onDelete={deleteExpense}
+                  onEdit={openEdit}
                   onRename={renameTraveler}
                 />
               </div>
@@ -164,13 +189,18 @@ export default function Dashboard() {
       <FloatingControls
         currency={currency}
         onSwitch={switchCurrency}
-        onAdd={() => setModalOpen(true)}
+        onAdd={openAdd}
         reduce={!!reduce}
       />
 
       <AnimatePresence>
         {modalOpen && data && (
-          <ExpenseModal data={data} onClose={() => setModalOpen(false)} onSubmit={addExpense} />
+          <ExpenseModal
+            data={data}
+            initial={editTarget}
+            onClose={() => setModalOpen(false)}
+            onSubmit={saveExpense}
+          />
         )}
       </AnimatePresence>
     </div>

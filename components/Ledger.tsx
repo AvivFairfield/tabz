@@ -13,12 +13,14 @@ export default function Ledger({
   summary,
   fmt,
   onDelete,
+  onEdit,
   onRename,
 }: {
   data: TripData;
   summary: TripSummary;
   fmt: Fmt;
   onDelete: (id: string) => void;
+  onEdit: (expense: Expense) => void;
   onRename: (id: TravelerId, name: string) => Promise<void>;
 }) {
   const reduce = useReducedMotion();
@@ -34,6 +36,7 @@ export default function Ledger({
         fmt={fmt}
         reduce={!!reduce}
         onDelete={onDelete}
+        onEdit={onEdit}
         onRename={onRename}
       />
       <PersonPanel
@@ -44,6 +47,7 @@ export default function Ledger({
         fmt={fmt}
         reduce={!!reduce}
         onDelete={onDelete}
+        onEdit={onEdit}
         onRename={onRename}
       />
     </section>
@@ -58,6 +62,7 @@ function PersonPanel({
   fmt,
   reduce,
   onDelete,
+  onEdit,
   onRename,
 }: {
   traveler: Traveler;
@@ -67,6 +72,7 @@ function PersonPanel({
   fmt: Fmt;
   reduce: boolean;
   onDelete: (id: string) => void;
+  onEdit: (expense: Expense) => void;
   onRename: (id: TravelerId, name: string) => Promise<void>;
 }) {
   const [editing, setEditing] = useState(false);
@@ -170,7 +176,14 @@ function PersonPanel({
         <ul className="flex-1 divide-y divide-hairline/60">
           <AnimatePresence initial={false}>
             {sorted.map((e) => (
-              <ExpenseRow key={e.id} expense={e} fmt={fmt} reduce={reduce} onDelete={() => onDelete(e.id)} />
+              <ExpenseRow
+                key={e.id}
+                expense={e}
+                fmt={fmt}
+                reduce={reduce}
+                onDelete={() => onDelete(e.id)}
+                onEdit={() => onEdit(e)}
+              />
             ))}
           </AnimatePresence>
         </ul>
@@ -184,11 +197,13 @@ function ExpenseRow({
   fmt,
   reduce,
   onDelete,
+  onEdit,
 }: {
   expense: Expense;
   fmt: Fmt;
   reduce: boolean;
   onDelete: () => void;
+  onEdit: () => void;
 }) {
   const cat = CATEGORY_LABELS[expense.category];
   const [armed, setArmed] = useState(false);
@@ -206,20 +221,27 @@ function ExpenseRow({
       animate={{ opacity: 1, y: 0 }}
       exit={reduce ? undefined : { opacity: 0, height: 0, overflow: "hidden" }}
       transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-      className="group flex items-center gap-3 px-4 py-2.5 sm:px-5"
+      className="group flex items-center gap-3 px-2 py-1 sm:px-3"
     >
-      <span className="w-14 shrink-0 font-mono text-xs text-ink-faint">
-        {formatDate(expense.date)}
-      </span>
-      <span
-        title={cat.label}
-        className="flex h-7 w-7 shrink-0 items-center justify-center rounded border border-hairline bg-surface-2 text-xs text-ink-muted"
-        aria-label={cat.label}
+      <button
+        onClick={onEdit}
+        aria-label={`Edit ${expense.title}`}
+        title="Edit"
+        className="flex min-w-0 flex-1 items-center gap-3 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-surface-2 focus-visible:bg-surface-2 sm:px-2"
       >
-        {cat.kanji}
-      </span>
-      <p className="min-w-0 flex-1 truncate text-sm text-ink">{expense.title}</p>
-      <p className="font-mono text-sm">{fmt(expense.amount)}</p>
+        <span className="w-14 shrink-0 font-mono text-xs text-ink-faint">
+          {formatDate(expense.date)}
+        </span>
+        <span
+          title={cat.label}
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded border border-hairline bg-surface-2 text-xs text-ink-muted"
+          aria-label={cat.label}
+        >
+          {cat.kanji}
+        </span>
+        <span className="min-w-0 flex-1 truncate text-sm text-ink">{expense.title}</span>
+        <span className="font-mono text-sm">{fmt(expense.amount)}</span>
+      </button>
       <button
         onClick={() => (armed ? onDelete() : setArmed(true))}
         aria-label={armed ? `Confirm delete ${expense.title}` : `Delete ${expense.title}`}

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { X } from "@phosphor-icons/react";
-import type { Category, TravelerId, TripData } from "@/lib/types";
+import type { Category, Expense, TravelerId, TripData } from "@/lib/types";
 import { CATEGORIES, CATEGORY_LABELS } from "@/lib/types";
 
 export interface NewExpense {
@@ -16,23 +16,27 @@ export interface NewExpense {
 
 export default function ExpenseModal({
   data,
+  initial,
   onClose,
   onSubmit,
 }: {
   data: TripData;
+  /** When set, the modal edits this expense instead of creating one */
+  initial?: Expense | null;
   onClose: () => void;
   onSubmit: (expense: NewExpense) => Promise<void>;
 }) {
   const reduce = useReducedMotion();
-  const [title, setTitle] = useState("");
-  const [amount, setAmount] = useState("");
-  const [category, setCategory] = useState<Category>("food");
-  // default to whoever logged the previous expense
+  const [title, setTitle] = useState(initial?.title ?? "");
+  const [amount, setAmount] = useState(initial ? String(initial.amount) : "");
+  const [category, setCategory] = useState<Category>(initial?.category ?? "food");
+  // for new expenses, default to whoever logged the previous one
   const [payerId, setPayerId] = useState<TravelerId>(() => {
+    if (initial) return initial.payerId;
     const saved = window.localStorage.getItem("tabi-payer");
     return saved === "a" || saved === "b" ? saved : "a";
   });
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(() => initial?.date ?? new Date().toISOString().slice(0, 10));
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const titleRef = useRef<HTMLInputElement>(null);
@@ -62,7 +66,7 @@ export default function ExpenseModal({
         payerId,
         date,
       });
-      window.localStorage.setItem("tabi-payer", payerId);
+      if (!initial) window.localStorage.setItem("tabi-payer", payerId);
       onClose();
     } catch {
       setError("Could not save the expense. Try again.");
@@ -82,7 +86,7 @@ export default function ExpenseModal({
       onClick={onClose}
       role="dialog"
       aria-modal="true"
-      aria-label="Add expense"
+      aria-label={initial ? "Edit expense" : "Add expense"}
     >
       <motion.div
         initial={reduce ? false : { opacity: 0, y: 24, scale: 0.97 }}
@@ -93,7 +97,9 @@ export default function ExpenseModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between">
-          <h2 className="text-xl font-semibold tracking-tight">Add expense</h2>
+          <h2 className="text-xl font-semibold tracking-tight">
+            {initial ? "Edit expense" : "Add expense"}
+          </h2>
           <button
             onClick={onClose}
             aria-label="Close"
@@ -219,7 +225,7 @@ export default function ExpenseModal({
               disabled={submitting}
               className="rounded-lg bg-vermilion px-5 py-2 text-sm font-medium text-canvas transition-all hover:bg-vermilion-hover active:scale-[0.98] disabled:opacity-60"
             >
-              {submitting ? "Saving…" : "Add expense"}
+              {submitting ? "Saving…" : initial ? "Save changes" : "Add expense"}
             </button>
           </div>
         </form>
