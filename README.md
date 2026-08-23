@@ -20,7 +20,7 @@ Open http://localhost:3000. To use it together, run it on a machine you both can
 
 ## Where the data lives
 
-Everything is stored in `data/trip.json` (created on first run, git-ignored). Back it up by copying that file. Note: this file-based store fits a self-hosted server or local use; serverless hosts (Vercel functions) have read-only disks, so deploying there would need a small database swap (e.g. Vercel KV, SQLite on a VPS, or Supabase).
+Everything is stored in `data/trip.json`, committed to the repo so the ledger travels with it. This app is built for one trip; there is no external database. Note: file storage needs a real disk, so run it locally or on a small server (serverless hosts like Vercel functions have read-only filesystems).
 
 ## Stack
 

@@ -1,0 +1,23 @@
+{
+  "travelers": [
+    {
+      "id": "a",
+      "name": "Aviv"
+    },
+    {
+      "id": "b",
+      "name": "Amit"
+    }
+  ],
+  "expenses": [
+    {
+      "id": "fb6e83a9-1edb-4816-ae82-467fdf58ca08",
+      "title": "55",
+      "amount": 555,
+      "category": "food",
+      "payerId": "a",
+      "date": "2026-08-23",
+      "createdAt": 1787452486692
+    }
+  ]
+}
