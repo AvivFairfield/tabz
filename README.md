@@ -20,7 +20,10 @@ Open http://localhost:3000. To use it together, run it on a machine you both can
 
 ## Where the data lives
 
-Everything is stored in `data/trip.json`, committed to the repo so the ledger travels with it. This app is built for one trip; there is no external database. Note: file storage needs a real disk, so run it locally or on a small server (serverless hosts like Vercel functions have read-only filesystems).
+One trip.json document, no database:
+
+- **Locally**: `data/trip.json` in the repo (committed, so the ledger travels with the code).
+- **On Vercel**: serverless functions cannot write to disk, so the same document lives in [Vercel Blob](https://vercel.com/docs/vercel-blob). One-time setup: project → **Storage** tab → **Create Database → Blob** → connect it to the project, then redeploy. The committed `data/trip.json` seeds the blob on first run.
 
 ## Stack
 
