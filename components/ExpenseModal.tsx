@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { X } from "@phosphor-icons/react";
 import type { Category, Expense, TravelerId, TripData } from "@/lib/types";
-import { CATEGORIES, CATEGORY_LABELS } from "@/lib/types";
+import { CATEGORIES, CATEGORY_LABELS, withAlpha } from "@/lib/types";
 
 export interface NewExpense {
   title: string;
@@ -184,25 +184,34 @@ export default function ExpenseModal({
           <div className="space-y-2">
             <span className="block text-sm font-medium text-ink-muted">Category</span>
             <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
-              {CATEGORIES.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setCategory(c)}
-                  aria-pressed={category === c}
-                  title={CATEGORY_LABELS[c].label}
-                  className={`flex flex-col items-center gap-1 rounded-lg border px-2 py-2 transition-colors active:scale-[0.98] ${
-                    category === c
-                      ? "border-vermilion/60 bg-vermilion/10 text-ink"
-                      : "border-hairline bg-surface-1 text-ink-subtle hover:text-ink-muted"
-                  }`}
-                >
-                  <span className="text-lg leading-none" aria-hidden>
-                    {CATEGORY_LABELS[c].kanji}
-                  </span>
-                  <span className="text-[11px]">{CATEGORY_LABELS[c].label}</span>
-                </button>
-              ))}
+              {CATEGORIES.map((c) => {
+                const meta = CATEGORY_LABELS[c];
+                const selected = category === c;
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setCategory(c)}
+                    aria-pressed={selected}
+                    title={meta.label}
+                    style={
+                      selected
+                        ? { borderColor: withAlpha(meta.color, 0.65), background: withAlpha(meta.color, 0.14) }
+                        : undefined
+                    }
+                    className={`flex flex-col items-center gap-1 rounded-lg border px-2 py-2 transition-colors active:scale-[0.98] ${
+                      selected
+                        ? "text-ink"
+                        : "border-hairline bg-surface-1 text-ink-subtle hover:text-ink-muted"
+                    }`}
+                  >
+                    <span className="text-lg leading-none" style={{ color: meta.color }} aria-hidden>
+                      {meta.kanji}
+                    </span>
+                    <span className="text-[11px]">{meta.label}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { Check, PencilSimple, Trash } from "@phosphor-icons/react";
 import type { Expense, Traveler, TravelerId, TripData } from "@/lib/types";
-import { CATEGORY_LABELS } from "@/lib/types";
+import { CATEGORY_LABELS, withAlpha } from "@/lib/types";
 import { formatDate, type TripSummary, type CategoryTotal } from "@/lib/format";
 import type { Fmt } from "./Dashboard";
 
@@ -151,7 +151,7 @@ function PersonPanel({
             <div key={category}>
               <div className="flex items-baseline justify-between text-sm">
                 <span className="text-ink-muted">
-                  <span className="mr-1.5 text-ink-faint" aria-hidden>
+                  <span className="mr-1.5" style={{ color: CATEGORY_LABELS[category].color }} aria-hidden>
                     {CATEGORY_LABELS[category].kanji}
                   </span>
                   {CATEGORY_LABELS[category].label}
@@ -159,8 +159,11 @@ function PersonPanel({
                 <span className="font-mono">{fmt(catTotal)}</span>
               </div>
               <div
-                className="mt-1.5 h-0.5 rounded-full bg-vermilion/70"
-                style={{ width: `${Math.max(share * 100, 3)}%` }}
+                className="mt-1.5 h-0.5 rounded-full"
+                style={{
+                  width: `${Math.max(share * 100, 3)}%`,
+                  background: withAlpha(CATEGORY_LABELS[category].color, 0.75),
+                }}
                 aria-hidden
               />
             </div>
@@ -221,6 +224,7 @@ function ExpenseRow({
       animate={{ opacity: 1, y: 0 }}
       exit={reduce ? undefined : { opacity: 0, height: 0, overflow: "hidden" }}
       transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+      style={{ backgroundColor: withAlpha(cat.color, 0.06) }}
       className="group flex items-center gap-3 px-2 py-1 sm:px-3"
     >
       <button
@@ -234,7 +238,12 @@ function ExpenseRow({
         </span>
         <span
           title={cat.label}
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded border border-hairline bg-surface-2 text-xs text-ink-muted"
+          style={{
+            color: cat.color,
+            borderColor: withAlpha(cat.color, 0.4),
+            backgroundColor: withAlpha(cat.color, 0.12),
+          }}
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded border text-xs"
           aria-label={cat.label}
         >
           {cat.kanji}
