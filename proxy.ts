@@ -24,6 +24,6 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // everything except static assets and the login endpoint itself
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|api/auth).*)"],
+  // everything except static assets, icons/manifest, and the login endpoint
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|icon|apple-icon|manifest.webmanifest|api/auth).*)"],
 };
