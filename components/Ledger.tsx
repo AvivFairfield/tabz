@@ -185,18 +185,14 @@ function PetalDissolve({ width, height }: { width: number; height: number }) {
         <motion.span
           key={p.id}
           initial={{ opacity: 0, x: 0, y: 0, rotate: 0, scale: 0.5 }}
-          animate={{
-            opacity: [0, 1, 1, 0],
-            x: [0, p.dx * 0.35, p.dx],
-            y: [0, p.dy * 0.3, p.dy],
-            rotate: [0, p.spin * 0.5, p.spin],
-            scale: [0.5, 1, 0.9],
-          }}
+          animate={{ opacity: [0, 1, 1, 0], x: p.dx, y: p.dy, rotate: p.spin, scale: 1 }}
           transition={{
+            // one continuous decelerating flight: a mid-keyframe with per-segment
+            // easing made petals park at the waypoint, which read as "waiting"
             duration: 1.3,
             delay: p.delay,
-            ease: [0.16, 1, 0.3, 1],
-            opacity: { duration: 1.3, delay: p.delay, times: [0, 0.1, 0.6, 1] },
+            ease: [0.25, 0.9, 0.4, 1],
+            opacity: { duration: 1.3, delay: p.delay, times: [0, 0.08, 0.55, 1], ease: "linear" },
           }}
           style={{
             position: "absolute",
