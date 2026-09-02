@@ -93,8 +93,8 @@ export default function Dashboard() {
       body: JSON.stringify(expense),
     });
     if (!res.ok) throw new Error();
-    const saved = await res.json();
-    setData((d) => (d ? { ...d, expenses: [...d.expenses, saved] } : d));
+    const saved: Expense[] = await res.json();
+    setData((d) => (d ? { ...d, expenses: [...d.expenses, ...saved] } : d));
   }
 
   function openAdd() {
@@ -196,6 +196,7 @@ export default function Dashboard() {
           <ExpenseModal
             data={data}
             initial={editTarget}
+            rates={rates}
             onClose={() => setModalOpen(false)}
             onSubmit={saveExpense}
           />

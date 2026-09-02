@@ -11,7 +11,7 @@ export async function POST(request: Request) {
   const title = typeof body.title === "string" ? body.title.trim() : "";
   const amount = Number(body.amount);
   const category = body.category as Category;
-  const payerId = body.payerId as TravelerId;
+  const payerId = body.payerId as TravelerId | "both";
   const date = typeof body.date === "string" ? body.date : "";
 
   if (!title) return Response.json({ error: "Title is required" }, { status: 400 });
@@ -19,24 +19,27 @@ export async function POST(request: Request) {
     return Response.json({ error: "Amount must be a positive number of yen" }, { status: 400 });
   if (!CATEGORIES.includes(category))
     return Response.json({ error: "Unknown category" }, { status: 400 });
-  if (payerId !== "a" && payerId !== "b")
+  if (payerId !== "a" && payerId !== "b" && payerId !== "both")
     return Response.json({ error: "Unknown payer" }, { status: 400 });
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date))
     return Response.json({ error: "Date must be YYYY-MM-DD" }, { status: 400 });
 
-  const expense: Expense = {
+  // "both" logs the full amount once per traveler, in a single write
+  const payerIds: TravelerId[] = payerId === "both" ? ["a", "b"] : [payerId];
+  const createdAt = Date.now();
+  const expenses: Expense[] = payerIds.map((pid) => ({
     id: randomUUID(),
     title,
     amount: Math.round(amount),
     category,
-    payerId,
+    payerId: pid,
     date,
-    createdAt: Date.now(),
-  };
+    createdAt,
+  }));
 
   const data = await readTrip();
-  data.expenses.push(expense);
+  data.expenses.push(...expenses);
   await writeTrip(data);
 
-  return Response.json(expense, { status: 201 });
+  return Response.json(expenses, { status: 201 });
 }
