@@ -234,21 +234,21 @@ function FloatingControls({
       {open && (
         <div className="fixed inset-0 z-20" onClick={() => setOpen(false)} aria-hidden />
       )}
-      <div className="fixed bottom-6 right-6 z-30 flex flex-col items-center gap-3">
+      <div className="fixed bottom-6 right-6 z-30 flex flex-row items-center gap-3">
         <motion.div
           initial={false}
-          animate={{ height: open ? 144 : 48 }}
+          animate={{ width: open ? 144 : 48 }}
           transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 340, damping: 28 }}
           role="group"
           aria-label="Display currency"
-          className="flex w-12 flex-col justify-end overflow-hidden rounded-3xl border border-hairline bg-surface-2/90 backdrop-blur-md"
+          className="flex h-12 flex-row justify-end overflow-hidden rounded-3xl border border-hairline bg-surface-2/90 backdrop-blur-md"
         >
           {open ? (
             CURRENCIES.map((c, i) => (
               <motion.button
                 key={c.code}
-                initial={reduce ? false : { opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial={reduce ? false : { opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.22, delay: reduce ? 0 : 0.03 * (CURRENCIES.length - i), ease: [0.16, 1, 0.3, 1] }}
                 onClick={() => {
                   onSwitch(c.code);

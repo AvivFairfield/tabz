@@ -35,7 +35,16 @@ export async function writeTrip(data: TripData): Promise<void> {
   await fs.mkdir(DATA_DIR, { recursive: true });
   const tmp = DATA_FILE + ".tmp";
   await fs.writeFile(tmp, JSON.stringify(data, null, 2), "utf-8");
-  await fs.rename(tmp, DATA_FILE);
+  // Windows throws EPERM renaming over a file a watcher/AV briefly holds open
+  for (let attempt = 0; ; attempt++) {
+    try {
+      await fs.rename(tmp, DATA_FILE);
+      return;
+    } catch (err) {
+      if (attempt >= 4 || (err as NodeJS.ErrnoException).code !== "EPERM") throw err;
+      await new Promise((r) => setTimeout(r, 50 * (attempt + 1)));
+    }
+  }
 }
 
 /*

@@ -84,8 +84,9 @@ export default function Ledger({
   );
 
   return (
-    <section aria-label="Travelers" className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-      <div className="relative justify-self-center lg:hidden">
+    <section aria-label="Travelers" className="lg:grid lg:grid-cols-2 lg:gap-6">
+      {/* sticky needs the section (not a grid area) as containing block to travel */}
+      <div className="sticky top-20 z-10 mb-6 flex justify-center lg:hidden">
         <motion.button
           onClick={swapMobileView}
           aria-label={`Showing ${shown.name}. Switch to ${hiddenOne.name}`}
